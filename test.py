@@ -1,15 +1,18 @@
 #tester
+num_of_pucks = 10
+import sys
+import inspect
 counter = 0
 locked_counter = 0
 spire1 = []
 spire2 = []
 spire3 = []
 win_setup = []
-
 initial_move = False
 check_legal_move = False
 solved = False
 max_num = None
+current_stack_position = len(inspect.stack(0))
 
 
 class puck:
@@ -27,6 +30,7 @@ def get_top(spire):
     else:
         return []
 
+#set first puck to correct spire ensuring least number of moves to solve
 def first_move(puck, spire):
     if len(spire) % 2 == 0:
         puck.next_hop = spire2
@@ -38,10 +42,6 @@ def first_move(puck, spire):
         puck.current_spire = spire3
     
 
-
-
-
-    
 
 def print_spires():
     spire1P = []
@@ -56,6 +56,7 @@ def print_spires():
     print(spire1P)
     print(spire2P)
     print(spire3P)
+    print(f"current_stack_position: {current_stack_position}")
 
 
 
@@ -70,11 +71,11 @@ def create_pucks(num):
         num_counter -= 1
 
 
+#puck cannot move to previous spire or sit on puck of lesser value
 def legal_move(puck, spire):
     if puck.current_spire is not spire and puck.previous_spire is not spire :
         if len(spire) != 0:
             check_puck = spire[len(spire)-1]
-            #print(f"check_puck:{check_puck.value} puck: {puck.value}")
             if puck.value < check_puck.value  :
                 return True
         elif len(spire) == 0:
@@ -87,6 +88,7 @@ def legal_move(puck, spire):
 def highest_number():
     highest = 0
     highest_value_spire = []
+    simplified_list = []         #using this instead of highest_value_spire[] speeds up second for loop
     temp_list = [spire1, spire2, spire3]
     for item in temp_list:
         if item != []:
@@ -94,11 +96,12 @@ def highest_number():
     for top in highest_value_spire:
         if get_top(top).value > highest:
             highest = get_top(top).value
-            highest_value_spire.append(top)
+            simplified_list.append(top)
+
+    return get_top(get_top(simplified_list))
 
 
-    return get_top(get_top(highest_value_spire))
-
+#return puck with value - 1 less than previous puck value
 def dec_puck(num):
     temp_list = [spire1, spire2, spire3]
     check_list = []
@@ -112,24 +115,22 @@ def dec_puck(num):
         return 0
     
     
-
 def move(puck):
     global counter
     global initial_move
     #win_condition()
-    if puck != None:
+    if puck != None:                       # not sure if this line still necessary
 
-        if initial_move != True:
-
+        if initial_move != True:           #this only runs first time 
             first_move(puck,spire1)
-            spire1.pop()
+            spire1.pop()                   
             initial_move = True
             counter = counter + 1
             print(f"counter is : {counter}")
             print_spires()
             move(highest_number())
 
-        else:
+        else:                              #move fuckery. too much recursion
             puck_decrement = puck.value - 1
             lock_puck(puck, puck.current_spire)
             if puck.lock_check == False:
@@ -143,30 +144,31 @@ def move(puck):
                     print(f"counter is : {counter}")
                     print_spires()
                     move(highest_number())
+
+                #handle illegal move. try decrementing puck 
                 else:
-                    if move(dec_puck(puck_decrement)) == 0:
-                        puck_decrement = puck_decrement - 1
-                        move(dec_puck(puck_decrement))
-            else:
-                if  dec_puck(puck_decrement) == 0:
-                        puck_decrement = puck_decrement - 1
-                        move(dec_puck(puck_decrement))
-                else:
-                    move(puck_decrement)
-        # else, call move with smaller puck
-        # decrement puck
-        # get spire by puck value
-        # vall get_top of that spire
-        # use that puck to call move()
-                
+                    puck = dec_puck(puck_decrement)
+                    while  puck == 0:
+                            puck_decrement = puck_decrement - 1
+                            puck = dec_puck(puck_decrement)       
+                    if puck != 0:
+                        move(puck)
 
+            # this is repeated to handle lock_check failure
+            else:             
+                    puck = dec_puck(puck_decrement)
+                    while  puck == 0:
+                            puck_decrement = puck_decrement - 1
+                            puck = dec_puck(puck_decrement)   
+                    if puck != 0:
+                        move(puck)
 
-
+#never used. figure it out                
 def win_condition():
     if spire3 == win_setup:
         solved = True
     
-    
+#if puck sitting in proper position at spire3, it can no longer be moved
 def lock_puck(puck, spire):
     global locked_counter
     global win_setup
@@ -174,7 +176,6 @@ def lock_puck(puck, spire):
         if puck.value == win_setup[locked_counter].value:
             puck.lock_check = True
             locked_counter = locked_counter + 1
-    
 
 
 #i hate myself for this
@@ -202,15 +203,12 @@ def free_spire(puck):
    
     
 
-create_pucks(3)
+create_pucks(num_of_pucks)
 max_num = win_setup[0].value
-
 print_spires()
-move(highest_number())
-
-print(f"highest num: {get_top(highest_number()).value}")
-
-# move(spire1[2])
-# move(spire1[1])
-
+sys.setrecursionlimit(3000)
+try:
+    move(highest_number())
+except RecursionError:
+    print("failed out")
 print("counter is " + str(counter))
