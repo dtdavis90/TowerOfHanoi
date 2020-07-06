@@ -56,7 +56,7 @@ def print_spires():
     print(spire1P)
     print(spire2P)
     print(spire3P)
-    print(f"current_stack_position: {current_stack_position}")
+    #print(f"current_stack_position: {current_stack_position}")
 
 
 
@@ -118,10 +118,7 @@ def dec_puck(num):
 def move(puck):
     global counter
     global initial_move
-    # print(f"spire3 {spire3}")
-    # print(f"win_setup: {win_setup}")
-    win_condition()
-    if puck != None:                       # not sure if this line still necessary
+                      # not sure if this line still necessary
 
         if initial_move != True:           #this only runs first time 
             first_move(puck,spire1)
@@ -134,9 +131,9 @@ def move(puck):
 
         else:                              #move fuckery. too much recursion
             puck_decrement = puck.value - 1
-            lock_puck(puck, puck.current_spire)
+
             if puck.lock_check == False:
-                free_spire(puck)
+
                 if legal_move(puck, puck.next_hop):
                     puck.previous_spire = puck.current_spire
                     puck.current_spire = puck.next_hop
@@ -167,8 +164,10 @@ def move(puck):
 
 #never used. figure it out                
 def win_condition():
+    #global solved
     if spire3 == win_setup:
-        solved = True
+        #solved = True
+        return True
     
 #if puck sitting in proper position at spire3, it can no longer be moved
 def lock_puck(puck, spire):
@@ -204,8 +203,28 @@ def free_spire(puck):
             puck.next_hop = spire2
         elif puck.previous_spire == spire2:
             puck.next_hop = spire1
+
+
+
    
+def controller(puck):
+    win_condition
+    lock_puck(puck, puck.current_spire)
     
+    free_spire(puck)
+    if legal_move(puck, puck.next_hop):
+        #move
+    else:
+        #decrement
+
+
+    #handle illegal move and lock _puck failure [decrement]
+
+
+
+
+
+
 
 create_pucks(num_of_pucks)
 max_num = win_setup[0].value
