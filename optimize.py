@@ -190,7 +190,8 @@ def controller(puck):
     if legal_move(puck, puck.next_hop):
         move(puck)
     else:
-        find_legal_puck(puck)
+        next_puck = find_legal_puck(puck)
+        move(next_puck)
         #handle next smallest puck not found or not legal move
         
 
@@ -219,8 +220,15 @@ def find_legal_puck(puck):
                 return puck
     if puck != 0 and legal_move(puck, puck.next_hop) == True:
         return puck
-    else :
-        current_puck = puck
+    else:
+        free_spire(puck)
+        while puck!= 0 and legal_move(puck, puck.next_hop) == False:
+            puck_decrement = puck_decrement - 1
+            puck = dec_puck(puck_decrement)
+    return puck
+            
+    
+           
 
 
 
