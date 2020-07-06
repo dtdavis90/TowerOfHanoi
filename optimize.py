@@ -11,8 +11,6 @@ win_setup = []
 initial_move = False
 check_legal_move = False
 solved = False
-max_num = None
-current_stack_position = len(inspect.stack(0))
 
 
 class puck:
@@ -73,7 +71,7 @@ def create_pucks(num):
 
 #puck cannot move to previous spire or sit on puck of lesser value
 def legal_move(puck, spire):
-    if puck.current_spire is not spire and puck.previous_spire is not spire :
+    if puck.current_spire is not spire and puck.previous_spire is not spire and puck.lock_check != True:
         if len(spire) != 0:
             check_puck = spire[len(spire)-1]
             if puck.value < check_puck.value  :
@@ -118,49 +116,27 @@ def dec_puck(num):
 def move(puck):
     global counter
     global initial_move
-                      # not sure if this line still necessary
+    # not sure if this line still necessary
+    if initial_move != True:           #this only runs first time 
+        first_move(puck,spire1)
+        spire1.pop()                   
+        initial_move = True
+        counter = counter + 1
+        print(f"counter is : {counter}")
+        print_spires()
+        
 
-        if initial_move != True:           #this only runs first time 
-            first_move(puck,spire1)
-            spire1.pop()                   
-            initial_move = True
-            counter = counter + 1
-            print(f"counter is : {counter}")
-            print_spires()
-            move(highest_number())
+    else:
+        puck.previous_spire = puck.current_spire
+        puck.current_spire = puck.next_hop
+        puck.next_hop.append(puck)
+        puck.previous_spire.pop()
+        counter += 1
+        print(f"counter is : {counter}")
+        print_spires()                              #move fuckery. too much recursion
+       
 
-        else:                              #move fuckery. too much recursion
-            puck_decrement = puck.value - 1
-
-            if puck.lock_check == False:
-
-                if legal_move(puck, puck.next_hop):
-                    puck.previous_spire = puck.current_spire
-                    puck.current_spire = puck.next_hop
-                    puck.next_hop.append(puck)
-                    puck.previous_spire.pop()
-                    counter += 1
-                    print(f"counter is : {counter}")
-                    print_spires()
-                    move(highest_number())
-
-                #handle illegal move. try decrementing puck 
-                else:
-                    puck = dec_puck(puck_decrement)
-                    while  puck == 0:
-                            puck_decrement = puck_decrement - 1
-                            puck = dec_puck(puck_decrement)       
-                    if puck != 0:
-                        move(puck)
-
-            # this is repeated to handle lock_check failure
-            else:             
-                    puck = dec_puck(puck_decrement)
-                    while  puck == 0:
-                            puck_decrement = puck_decrement - 1
-                            puck = dec_puck(puck_decrement)    
-                    if puck != 0:
-                        move(puck)
+        
 
 #never used. figure it out                
 def win_condition():
@@ -205,34 +181,57 @@ def free_spire(puck):
             puck.next_hop = spire1
 
 
-
+# puck == 0 and 
    
 def controller(puck):
     win_condition
     lock_puck(puck, puck.current_spire)
-    
     free_spire(puck)
     if legal_move(puck, puck.next_hop):
-        #move
+        move(puck)
     else:
-        #decrement
+        find_legal_puck(puck)
+        #handle next smallest puck not found or not legal move
+        
+
+        # this is repeated to handle lock_check failure
+    # else:             
+    #     puck = dec_puck(puck_decrement)
+    #     while  puck == 0:
+    #             puck_decrement = puck_decrement - 1
+    #             puck = dec_puck(puck_decrement)    
+    #     if puck != 0:
+    #         move(puck)
+
+        
 
 
     #handle illegal move and lock _puck failure [decrement]
 
 
+def find_legal_puck(puck):
+    puck_decrement = puck.value - 1
+    puck = dec_puck(puck_decrement)
+    while puck == 0:
+            puck_decrement = puck_decrement - 1
+            puck = dec_puck(puck_decrement)
+            if puck != 0 and legal_move(puck, puck.next_hop) == True:
+                return puck
+    if puck != 0 and legal_move(puck, puck.next_hop) == True:
+        return puck
+    else :
+        current_puck = puck
 
 
 
 
 
 create_pucks(num_of_pucks)
-max_num = win_setup[0].value
+current_puck = get_top(spire1)
 print_spires()
-sys.setrecursionlimit(1000)
 try:
     while solved != True:
-        move(highest_number())
+        controller(highest_number())
     print("Tower Solved")
 except RecursionError:
     print("failed out")
