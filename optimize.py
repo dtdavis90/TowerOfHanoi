@@ -1,4 +1,4 @@
-num_of_pucks = 3
+num_of_pucks = 10
 import sys
 import inspect
 counter = 0
@@ -19,7 +19,7 @@ class puck:
     next_hop = spire1 
     lock_check = False
 
-
+#change num_of_pucks variable at top to create "num" pucks
 def create_pucks(num):
     num_counter = num
     for x in range(0, num):
@@ -30,28 +30,29 @@ def create_pucks(num):
         num_counter -= 1
 
 
-#never used. figure it out                
+#called in controller to signal end. called in main while loop to run program               
 def win_condition():
     global solved
     if spire3 == win_setup:
         solved = True
 
+
 def controller(puck):
     win_condition()
-    lock_puck(puck, puck.current_spire)
-    free_spire(puck)
-    if legal_move(puck, puck.next_hop):
-        move(puck)
-    else:
-        next_puck = find_legal_puck(puck)
-        move(next_puck)
+    if solved != True:
+        lock_puck(puck, puck.current_spire)
+        set_next_hop(puck)
+        if legal_move(puck, puck.next_hop):
+            move(puck)
+        else:
+            next_puck = find_legal_puck(puck)
+            move(next_puck)
 
-
+#handles movement. changes values of puck's current and previous spires and appends() and pops() appropriate spires
 def move(puck):
     global counter
     global initial_move
-    # not sure if this line still necessary
-    if initial_move != True:           #this only runs first time 
+    if initial_move != True:#           this only runs first time 
         first_move(puck,spire1)
         spire1.pop()                   
         initial_move = True
@@ -65,10 +66,10 @@ def move(puck):
         puck.previous_spire.pop()
         counter += 1
         print(f"counter is : {counter}")
-        print_spires()                              #move fuckery. too much recursion
+        print_spires()                              
 
 
-#start solution by setting first puck to correct spire ensuring least number of moves to solve
+#only runs for first move of puck#1. sets first puck to correct spire ensuring least number of moves to solve
 def first_move(puck, spire):
     if len(spire) % 2 == 0:
         puck.next_hop = spire2
@@ -88,7 +89,7 @@ def get_top(spire):
         return []
 
 
-#return spire with puck containing num at top
+#return spire with puck containing highest number at top
 def highest_number():
     highest = 0
     highest_value_spire = []
@@ -119,7 +120,7 @@ def dec_puck(num):
     return 0
 
 
-#rthis will continue to decrement puck by calling dec_puck() until it finds a puck that can legally move
+#this will continue to decrement puck by calling dec_puck() until it finds a puck that can legally move
 def find_legal_puck(puck):
     puck_decrement = puck.value - 1
     puck = dec_puck(puck_decrement)
@@ -128,17 +129,17 @@ def find_legal_puck(puck):
             puck = dec_puck(puck_decrement)
             if puck != 0 and legal_move(puck, puck.next_hop) == True:
                 return puck
-    free_spire(puck)
+    set_next_hop(puck)
     if puck != 0 and legal_move(puck, puck.next_hop) == True:
         return puck
     else:
         
-        while puck!= 0 and legal_move(puck, puck.next_hop) != True or puck == 0:
+        while puck != 0 and legal_move(puck, puck.next_hop) != True or puck == 0:
             puck_decrement = puck_decrement - 1
             puck = dec_puck(puck_decrement)
             #next line will crash if puck is not found. puck == 0
             if puck != 0:
-                free_spire(puck)
+                set_next_hop(puck)
     return puck
 
 
@@ -179,27 +180,16 @@ def print_spires():
 
 
 #i hate myself for this
-def free_spire(puck):
-    if puck.current_spire == spire1:
-        if puck.previous_spire == spire1:            #initial condition for unmoved puck
-            if not spire2:                           # check if spire2 & spire3 are empty with "not"
-                puck.next_hop = spire2
-            elif not spire3:
-                puck.next_hop = spire3
-        elif puck.previous_spire == spire2:
-            puck.next_hop = spire3
-        elif puck.previous_spire == spire3:
+def set_next_hop(puck):
+    spire_list = [spire1, spire2, spire3]
+    for spire in spire_list:
+        if spire != puck.previous_spire and spire != puck.current_spire:
+            puck.next_hop = spire
+    if puck.current_spire == spire1 and puck.previous_spire == spire1:
+        if not spire2:
             puck.next_hop = spire2
-    elif puck.current_spire == spire2:
-        if puck.previous_spire == spire1:
-            puck.next_hop = spire3
-        elif puck.previous_spire == spire3:
-            puck.next_hop = spire1
-    elif puck.current_spire == spire3:
-        if puck.previous_spire == spire1:
-            puck.next_hop = spire2
-        elif puck.previous_spire == spire2:
-            puck.next_hop = spire1
+        elif not spire3:
+            puck.next_hop == spire3
 
 
 create_pucks(num_of_pucks)
