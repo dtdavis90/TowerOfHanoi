@@ -191,7 +191,7 @@ def set_next_hop(puck):
         elif not spire3:
             puck.next_hop == spire3
 
-
+#this is essentialy the main()
 create_pucks(num_of_pucks)
 current_puck = get_top(spire1)
 print_spires()
