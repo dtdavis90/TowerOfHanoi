@@ -1,214 +1,209 @@
-#tester
-num_of_pucks = 10
 import sys
 import inspect
+num_of_pucks = 5
 counter = 0
 locked_counter = 0
 spire1 = []
 spire2 = []
 spire3 = []
+spire_list = []
 win_setup = []
-initial_move = False
+initial_move_made = False
 check_legal_move = False
 solved = False
-max_num = None
-current_stack_position = len(inspect.stack(0))
 
 
-class puck:
-    value = 0
-    current_spire = spire1
-    previous_spire = spire1
-    next_hop = spire1 
-    lock_check = False
+class Puck:
+    def __init__(self, value, lock_check, spire_initializer):
+        self.value = value
+        self.lock_check = lock_check
+        self.current_spire = spire_initializer
+        self.previous_spire = spire_initializer
+        self.next_hop = spire_initializer
+
+class Spire:
+    def __init__(self, name, elements):
+        self.name = name
+        self.elements = elements
 
 
-#grab puck object from top of given spire
-def get_top(spire):
+#change num_of_pucks variable at top to create "num" pucks
+def create_pucks(num):
+    global spire_list
+    for x in reversed(range(1, num+1)):
+        p = Puck(x, False, spire_list[0])
+        spire_list[0].elements.append(p)
+
+
+    
+def create_spires(num):
+    global spire_list
+    for x in range(0, num):
+        spire  = Spire(0, [])
+        spire.name = x
+        spire_list.append(spire)
+
+
+#called in solution_controller to signal end. called in main while loop to run program               
+def win_condition():                                                                                   #possible spire method
+    global solved
+    if spire_list[len(spire_list)-1] == win_setup:
+        solved = True
+
+
+def solution_controller(puck):
+    win_condition()
+    if solved != True:
+        lock_puck(puck, puck.current_spire)
+        set_next_hop(puck)
+        if legal_move(puck, puck.next_hop):
+           move_controller(puck)
+        else:
+            next_puck = find_legal_puck(puck)
+            move_controller(next_puck)
+
+#handles movement of pucks at high level
+def move_controller(puck):
+    global counter
+    global initial_move_made
+    if initial_move_made != True:
+        #this only runs first time
+        puck.next_hop = initial_move(puck, spire_list[0])
+        shift(puck, puck.next_hop)                
+        initial_move_made = True
+        counter = counter + 1
+        print_spires()
+        print(f"counter is : {counter}")
+    else:
+        shift(puck, puck.next_hop)
+        counter += 1
+        print_spires()
+        print(f"counter is : {counter}")                              
+
+
+def shift(puck, spire):
+    #changes values of puck's current and previous spires 
+    # and appends() and pops() appropriate spires
+    puck.previous_spire = puck.current_spire
+    puck.current_spire = spire
+    spire.elements.append(puck)
+    puck.previous_spire.elements.pop()
+
+
+def initial_move(puck, spire):
+    #only runs for first move of puck#1. sets first puck to 
+    # correct spire ensuring least number of moves to solve
+    global spire_list
+    if len(spire.elements) % 2 == 0:
+        return spire_list[1]
+    return spire_list[len(spire_list)-1]
+    
+
+
+def get_top(spire):                                                                                           #spire method
+    #grab puck object from top of given spire
     if len(spire) > 0:
         return spire[len(spire)-1]
-    else:
-        return []
+    return []
 
-#set first puck to correct spire ensuring least number of moves to solve
-def first_move(puck, spire):
-    if len(spire) % 2 == 0:
-        puck.next_hop = spire2
-        puck.next_hop.append(get_top(spire1))
-        puck.current_spire = spire2
-    else:
-        puck.next_hop = spire3
-        puck.next_hop.append(get_top(spire1))
-        puck.current_spire = spire3
+
+
+def highest_number():
+    global spire_list
+    highest = 0
+    for spire in spire_list:
+        if spire.elements == []:
+            continue
+        elif highest == 0:
+            highest = get_top(spire.elements)
+        elif get_top(spire.elements).value > highest.value:
+            highest = get_top(spire.elements)
+    return highest
     
+
+
+
+def dec_puck(spire_check_list):
+    #will eventually replace highest_puck()
+    num_list = {}
+    cheat_list = {}
+    #i will remove cheat when i get method to work and i've had coffee or liqour
+    index = 0
+    for spire in spire_check_list:
+        num_list[index] = spire.elements.value
+        cheat_list[index] = spire.elements
+        index += 1
+    for x in range(0,len(num_list)-1):
+        highest_puck_index = max(num_list, key=num_list.get)
+        if legal_move(cheat_list.pop(highest_puck_index))
+        #need to look over this when i get home
+        
+                          
+     
+
+
+
+def find_legal_puck(puck):
+    global spire_list
+    check_list = []
+    for spire in spire_list:
+        if spire == []:
+            continue
+        check_list.append(spire)
+    dec_puck(check_list)
+
+
+
+
+def legal_move(puck, spire):
+    #puck cannot move to previous spire or sit on puck of lesser value
+    if puck.current_spire is not spire and puck.previous_spire is not spire and puck.lock_check != True:
+        if len(spire.elements) != 0 and spire.elements[len(spire.elements)-1].value > puck.value:
+            return True
+        elif len(spire.elements) == 0:
+            return  True
+    return False
+
+
+
+def lock_puck(puck, spire):
+    #if puck sitting in proper position at final spire, it can no longer be moved
+    global locked_counter
+    global win_setup
+    global spire_list
+    if spire == spire_list[len(spire_list)-1] and puck.value == win_setup[locked_counter].value:
+        puck.lock_check = True
+        locked_counter = locked_counter + 1
+
 
 
 def print_spires():
-    spire1P = []
-    spire2P = []
-    spire3P = []
-    for x in spire1:
-        spire1P.append(x.value)
-    for x in spire2:
-        spire2P.append(x.value)
-    for x in spire3:
-        spire3P.append(x.value)
-    print(spire1P)
-    print(spire2P)
-    print(spire3P)
-    print(f"current_stack_position: {current_stack_position}")
+    #prints spires with puck values
+    global spire_list
+    for spire in spire_list:
+        print(f"{spire.name} [", end ="")
+        for puck in spire.elements:
+            print(f"{puck.value}", end ="")
+        print("]\n")
 
 
-
-
-def create_pucks(num):
-    num_counter = num
-    for x in range(0, num):
-        p = puck()
-        p.value = num_counter
-        spire1.append(p)
-        win_setup.append(p)
-        num_counter -= 1
-
-
-#puck cannot move to previous spire or sit on puck of lesser value
-def legal_move(puck, spire):
-    if puck.current_spire is not spire and puck.previous_spire is not spire :
-        if len(spire) != 0:
-            check_puck = spire[len(spire)-1]
-            if puck.value < check_puck.value  :
-                return True
-        elif len(spire) == 0:
-            return  True
-    else:
-        return False
-
-        
-#return spire with puck containing num at top
-def highest_number():
-    highest = 0
-    highest_value_spire = []
-    simplified_list = []         #using this instead of highest_value_spire[] speeds up second for loop
-    temp_list = [spire1, spire2, spire3]
-    for item in temp_list:
-        if item != []:
-            highest_value_spire.append(item)
-    for top in highest_value_spire:
-        if get_top(top).value > highest:
-            highest = get_top(top).value
-            simplified_list.append(top)
-
-    return get_top(get_top(simplified_list))
-
-
-#return puck with value - 1 less than previous puck value
-def dec_puck(num):
-    temp_list = [spire1, spire2, spire3]
-    check_list = []
-    for item in temp_list:
-        if item != []:
-            if get_top(item).value == num:
-                check_list = item
-                return get_top(check_list)
-    #this only runs if num not found
-    if check_list == []:
-        return 0
-    
-    
-def move(puck):
-    global counter
-    global initial_move
-    #win_condition()
-    if puck != None:                       # not sure if this line still necessary
-
-        if initial_move != True:           #this only runs first time 
-            first_move(puck,spire1)
-            spire1.pop()                   
-            initial_move = True
-            counter = counter + 1
-            print(f"counter is : {counter}")
-            print_spires()
-            move(highest_number())
-
-        else:                              #move fuckery. too much recursion
-            puck_decrement = puck.value - 1
-            lock_puck(puck, puck.current_spire)
-            if puck.lock_check == False:
-                free_spire(puck)
-                if legal_move(puck, puck.next_hop):
-                    puck.previous_spire = puck.current_spire
-                    puck.current_spire = puck.next_hop
-                    puck.next_hop.append(puck)
-                    puck.previous_spire.pop()
-                    counter += 1
-                    print(f"counter is : {counter}")
-                    print_spires()
-                    move(highest_number())
-
-                #handle illegal move. try decrementing puck 
-                else:
-                    puck = dec_puck(puck_decrement)
-                    while  puck == 0:
-                            puck_decrement = puck_decrement - 1
-                            puck = dec_puck(puck_decrement)       
-                    if puck != 0:
-                        move(puck)
-
-            # this is repeated to handle lock_check failure
-            else:             
-                    puck = dec_puck(puck_decrement)
-                    while  puck == 0:
-                            puck_decrement = puck_decrement - 1
-                            puck = dec_puck(puck_decrement)   
-                    if puck != 0:
-                        move(puck)
-
-#never used. figure it out                
-def win_condition():
-    if spire3 == win_setup:
-        solved = True
-    
-#if puck sitting in proper position at spire3, it can no longer be moved
-def lock_puck(puck, spire):
-    global locked_counter
-    global win_setup
-    if spire == spire3:
-        if puck.value == win_setup[locked_counter].value:
-            puck.lock_check = True
-            locked_counter = locked_counter + 1
-
-
-#i hate myself for this
-def free_spire(puck):
-    if puck.current_spire == spire1:
-        if puck.previous_spire == spire1:            #initial condition for unmoved puck
-            if not spire2:                           # check if spire2 & spire3 are empty with "not"
-                puck.next_hop = spire2
-            elif not spire3:
-                puck.next_hop = spire3
-        elif puck.previous_spire == spire2:
-            puck.next_hop = spire3
-        elif puck.previous_spire == spire3:
-            puck.next_hop = spire2
-    elif puck.current_spire == spire2:
-        if puck.previous_spire == spire1:
-            puck.next_hop = spire3
-        elif puck.previous_spire == spire3:
-            puck.next_hop = spire1
-    elif puck.current_spire == spire3:
-        if puck.previous_spire == spire1:
-            puck.next_hop = spire2
-        elif puck.previous_spire == spire2:
-            puck.next_hop = spire1
-   
+def set_next_hop(puck):
+    global spire_list
+    break_for = False
+    for spire in spire_list:
+        if spire != puck.previous_spire and spire != puck.current_spire and break_for != True:
+            puck.next_hop = spire
+            break_for = True
+            #using break_for is probably terrible
     
 
+
+create_spires(3)
 create_pucks(num_of_pucks)
-max_num = win_setup[0].value
-print_spires()
-sys.setrecursionlimit(3000)
-try:
-    move(highest_number())
-except RecursionError:
-    print("failed out")
-print("counter is " + str(counter))
+#current_puck = get_top(spire1)
+
+# print_spires()
+# while solved != True:
+#     solution_controller(highest_number())
+# print("Tower Solved")
+
