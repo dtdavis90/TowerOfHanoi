@@ -111,6 +111,7 @@ def next_puck(spire_check_list):
     puck_value_list = {}
     puck_list = {}
     index = 0
+
     for spire in spire_check_list:
         puck_value_list[index] = spire.elements[len(spire.elements)-1].value
         puck_list[index] = (spire.elements[len(spire.elements)-1])
@@ -121,7 +122,6 @@ def next_puck(spire_check_list):
     for x in range(0, len(puck_value_list)):
         puck = puck_list[highest_puck_index]
         lock_puck(puck)
-        set_next_hop(puck)
         if(legal_move(puck)):
             return puck
         puck_list.pop(highest_puck_index)
@@ -131,14 +131,14 @@ def next_puck(spire_check_list):
 
 def legal_move(puck):
     #puck cannot move to previous spire or sit on puck of lesser value
-    spire = puck.next_hop
-    if spire == None:
-        return False
-    if puck.current_spire is not spire and puck.previous_spire is not spire and puck.lock_check != True:
-        if len(spire.elements) != 0 and spire.elements[len(spire.elements)-1].value > puck.value:
-            return True
-        elif len(spire.elements) == 0:
-            return  True
+    global spire_list  
+    for spire in spire_list:
+        if spire == None:
+            continue
+        if puck.current_spire is not spire and puck.previous_spire is not spire and puck.lock_check != True:
+            if len(spire.elements) != 0 and spire.elements[len(spire.elements)-1].value > puck.value or len(spire.elements) == 0:
+                puck.next_hop = spire
+                return True
     return False
 
 
@@ -161,28 +161,6 @@ def print_spires():
         for puck in spire.elements:
             print(f"{puck.value}", end ="")
         print("]\n")
-
-
-def set_next_hop(puck):
-    global spire_list
-    break_if = False
-    if puck.previous_spire is puck.current_spire:
-        puck.next_hop = find_empty_spire(spire_list)
-        break_if = True
-    for spire in spire_list:          
-        if spire != puck.previous_spire and spire != puck.current_spire and break_if != True:
-            puck.next_hop = spire
-            break_if = True
-            #using break_if is probably terrible
-
-def find_empty_spire(spire_list):
-    #helper method for set_next_hop
-    for spire in spire_list:
-        if spire.elements == []:
-            return spire
-        
-
-
 
 
 create_spires(3)
